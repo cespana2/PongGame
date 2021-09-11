@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Pong Game</title>
+    <style>
+    	* { padding: 0; margin: 0; }
+    	canvas { background: black; display: block; margin: 0 auto; }
+    </style>
+</head>
+<body style="background-color: darkgrey;">
+
+<canvas id="myCanvas" width="700" height="620"></canvas>
+
+<script>
+	var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+
+    //Ball x and y position, change in x and y direction when moving and radius of ball
+    var x = canvas.width/2;
+    var y = canvas.height/2;    
+    var dx = 10;
+    var dy = -4;
+    var ballRadius = 10;
+
+    //Paddle change in y direction and paddle dimensions
+    var paddleDY = -7;
+    var paddleHeight = 80;
+    var paddleWidth = 10;
+
+    var gameStart = false;
+
+    //Player 1 vars
+    var player1Score = 0;
+    var keyWPressed = false;
+    var keySPressed = false;
+    var player1X = 0;
+    var player1Y = canvas.height/2;
+
+    //Player 2 vars
+    var player2Score = 0;
+    var arrowUpPressed = false;
+    var arrowDownPressed = false;
+    var player2X = canvas.width - 10;
+    var player2Y = canvas.height/2;
+    
+
+    function drawBall() {
+        ctx.beginPath();
+        ctx.arc(x, y, ballRadius, 0, Math.PI*2);
+        ctx.fillStyle = "Orange";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function drawPaddles() {
+        ctx.beginPath();
+        ctx.rect(player2X, player2Y, paddleWidth, paddleHeight);
+        ctx.fillStyle = "Red";
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.rect(player1X, player1Y, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#42A5F5";
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBall();
+        drawPaddles();
+        paddleCollision();
+        drawScore();
+
+        //Ball starts moving when game is started
+        if(gameStart) {
+            x += dx;
+            y += dy;
+        }
+        else {
+            ctx.beginPath();
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "White";
+            ctx.textAlign = 'center';
+            ctx.fillText("Enter to Start", canvas.width/2, canvas.height/2 - 50);
+            ctx.closePath();
+        }
+        
+
+        //Players score when ball is past their opponents paddle
+        if(x < ballRadius) {
+            player2Score++;
+            x = canvas.width/2;
+            y = canvas.height/2;
+            x += dx;
+            gameStart = false;
+        }
+        else if(x > canvas.width + ballRadius) {
+            player1Score++;
+            x = canvas.width/2;
+            y = canvas.height/2;
+            x -= dx;
+            gameStart = false;
+        }
+
+        //Ball bounces off of top and bottom walls
+        if(y > canvas.height - ballRadius || y < ballRadius) {
+            dy=-dy;
+        }
+
+
+        if(player1Score == 5) {
+            alert("PLAYER 1 WINS!");
+            document.location.reload();
+        }
+
+        else if(player2Score == 5) {
+            alert("PLAYER 2 WINS!");
+            document.location.reload();
+        }
+
+
+        //Paddle Movement for Player 2, won't let paddle go past top and bottom walls
+        if(arrowUpPressed) {
+            player2Y += paddleDY;
+            if(player2Y < 0) {
+                player2Y = 0;
+            }
+        }
+
+        if(arrowDownPressed) {
+            player2Y -= paddleDY;
+            if(player2Y + paddleHeight > canvas.height) {
+                player2Y = canvas.height - paddleHeight;
+            }
+        }
+
+        //Paddle Movement for Player 1, won't let paddle go past top and bottom walls
+        if(keyWPressed) {
+            player1Y += paddleDY;
+            if(player1Y < 0) {
+                player1Y = 0;
+            }
+        }
+
+        if(keySPressed) {
+            player1Y -= paddleDY;
+            if(player1Y + paddleHeight > canvas.height) {
+                player1Y = canvas.height - paddleHeight;
+            }
+        }
+
+        requestAnimationFrame(draw);
+
+    }
+
+    //Function which checks if the ball has hit one of the paddles
+    function paddleCollision() {
+        if(x + ballRadius > canvas.width - paddleWidth && y < player2Y + paddleHeight && y > player2Y) {
+            dx = -dx;
+        }
+
+        if(x - ballRadius < paddleWidth && y < player1Y + paddleHeight && y > player1Y) {
+            dx = -dx;
+        }
+    }
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "White";
+        ctx.textAlign = 'left'
+        ctx.fillText("Player 1 (Ctrls: w,s): " + player1Score, 50, 20);
+        ctx.fillText("Player 2 (Ctrls: arrow keys): " + player2Score, canvas.width - 300, 20);
+    }
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("keypress", keyPressedHandler, false);
+
+    //Game starts when enter is pressed
+    function keyPressedHandler(e) {
+        if(e.key == "Enter") {
+            gameStart = true;
+        }
+    }
+
+    //Handler which checks which key is pressed down
+    function keyDownHandler(e) {
+        if(e.key == "Up" || e.key == "ArrowUp") {
+            arrowUpPressed = true;
+        }
+        else if(e.key == "Down" || e.key == "ArrowDown") {
+            arrowDownPressed = true;
+        }
+        else if(e.key == "w") {
+            keyWPressed = true;
+        }
+        else if(e.key == "s") {
+            keySPressed = true;
+        }
+    }
+
+    //Handler which checks which key has been released
+    function keyUpHandler(e) {
+        if(e.key == "Up" || e.key == "ArrowUp") {
+            arrowUpPressed = false;
+        }
+        else if(e.key == "Down" || e.key == "ArrowDown") {
+            arrowDownPressed = false;
+        }
+        else if(e.key == "w") {
+            keyWPressed = false;
+        }
+        else if(e.key == "s") {
+            keySPressed = false;
+        }
+    }
+
+    draw();
+
+</script>
+
+</body>
+</html>
